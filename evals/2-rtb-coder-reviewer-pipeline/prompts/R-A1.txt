@@ -1,0 +1,1 @@
+Your pass: A1. ID prefix A1-. Scope: the section "Auction rules" of TASK.md, rules 1 to 5, every sub-rule. Check each one twice: against the auction code called directly, and against the HTTP response of the real server (start it as the spec says). Limit: 45 tool calls, 20 minutes.

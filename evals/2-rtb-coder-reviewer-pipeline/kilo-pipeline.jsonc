@@ -1,0 +1,45 @@
+{
+  // Run config for the pipeline test (used via KILO_CONFIG). Same model/limits as the global config
+  // (~/.config/kilo/kilo.jsonc). Differences: bash allowed except an explicit deny list, because in
+  // `kilo run` ONE auto-rejected permission ENDS THE RUN (observed 2026-11-23: a bare `ls` killed it),
+  // and no firecrawl MCP / webfetch (no web access during the test).
+  "$schema": "https://app.kilo.ai/config.json",
+  "model": "llamacpp/Clover-35B-A3B",
+  "provider": {
+    "llamacpp": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "Clover 35B-A3B Preview (local, llama.cpp)",
+      "options": { "baseURL": "http://127.0.0.1:8000/v1", "apiKey": "unused" },
+      "models": {
+        "Clover-35B-A3B": {
+          "name": "Clover 35B-A3B Preview (local MoE, IQ4_XS)",
+          "tool_call": true,
+          "limit": { "context": 126976, "output": 16384 }
+        }
+      }
+    }
+  },
+  "permission": {
+    "read": "allow",
+    "edit": { "*": "allow" },
+    "bash": {
+      "*": "allow",
+      "sudo *": "deny", "su *": "deny", "ssh *": "deny", "scp *": "deny", "rsync *": "deny",
+      "git push*": "deny", "git remote*": "deny", "git config*": "deny", "git reset --hard*": "deny", "git clean*": "deny",
+      "launchctl *": "deny", "pkill *": "deny", "kill *": "deny", "kill": "deny", "xargs kill*": "deny", "killall *": "deny", "kill -9 1 *": "deny",
+      "rm -rf /*": "deny", "rm -rf ~*": "deny", "rm -rf $HOME*": "deny", "rm -rf ..*": "deny", "rm -fr *": "deny",
+      "chmod -R *": "deny", "chown *": "deny", "brew *": "deny", "pip *": "deny", "pip3 *": "deny",
+      "curl *": "deny", "wget *": "deny", "npm *": "deny", "npx *": "deny"
+    },
+    "webfetch": "deny",
+    // paths outside the worktree: DENY (a bare `ask` is auto-rejected in `kilo run` and ENDS the run; observed in cycle 2 on `cd /tmp`)
+    "external_directory": "deny"
+  },
+  "tools": {
+    "cron_create": false, "cron_delete": false, "cron_list": false, "schedule_wakeup": false,
+    "cancel_wakeup": false, "board_post": false, "board_read": false, "link_pr": false,
+    "agent_manager_models": false, "background_process": false
+  },
+  "tool_output": { "max_lines": 250, "max_bytes": 24000 },
+  "compaction": { "auto": true, "prune": true }
+}

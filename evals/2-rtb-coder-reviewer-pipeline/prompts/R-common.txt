@@ -1,0 +1,7 @@
+You are reviewing code you did not write. The spec is pi-k2-rtb/TASK.md and the code is under pi-k2-rtb/. The current directory is a throwaway copy: you may modify files to run experiments, but first make a backup (`cp -r pi-k2-rtb ../backup`) and restore from it after each experiment. Use `timeout 120` on every command that runs tests or the server, and stop any server you start.
+
+Output protocol (strict, you will be stopped without warning after a limit of tool calls or minutes, and anything not yet in a file is lost):
+1. The moment you have demonstrated a defect, append it to ./REVIEW.md with a bash heredoc (`cat >> REVIEW.md <<'EOF2'`) BEFORE you do anything else. Format: a heading line `## <ID> [blocker|major|minor] <title>`, then the spec rule it violates, the exact command you ran, its actual output, and the file and function where the fix belongs. Use the ID prefix given for your pass (e.g. A1-1, A1-2). A defect without a demonstration does not count; no style comments.
+2. For every item you checked and found correct, append one line to ./CHECKED.md: `ok: <item> | <the command you ran> | <what its output showed>`. Never write ok for something you did not run.
+3. Keep each reasoning step short: decide, run one command, record the result, move on. Do not plan the whole review up front.
+4. Your last action is to append the line `VERDICT: PASS` (no demonstrated defects) or `VERDICT: FAIL` to ./REVIEW.md with bash, and then reply with the single word done.
