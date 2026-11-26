@@ -1,0 +1,32 @@
+--- a/evals/3-rocket-game/bin/swap.sh
++++ b/evals/3-rocket-game/bin/swap.sh
+@@ -1,13 +1,14 @@
+ #!/bin/bash
+-# swap.sh clover|mova : make exactly one llama-server resident. Aborts loudly on any failed step.
++# swap.sh clover|mova|bonsai : make exactly one llama-server resident. Aborts loudly on any failed step.
+ # Leaves exactly one LaunchAgent enabled (reboot-safe). Env LOG = file to append progress to.
+ set -u
+-[ "${EVAL_ALLOW_SERVICE_CHANGES:-}" = 1 ] || { echo "swap.sh enables/disables macOS LaunchAgents (com.llamacpp.server, com.k2horizon.server) and restarts them. Read it, create those agents yourself, then set EVAL_ALLOW_SERVICE_CHANGES=1." >&2; exit 2; }
++[ "${EVAL_ALLOW_SERVICE_CHANGES:-}" = 1 ] || { echo "swap.sh enables/disables macOS LaunchAgents (com.llamacpp.server, com.k2horizon.server, com.bonsai.server) and restarts them. Read it, create those agents yourself, then set EVAL_ALLOW_SERVICE_CHANGES=1." >&2; exit 2; }
+ D=gui/$(id -u); LA=$HOME/Library/LaunchAgents
+ case "${1:-}" in
+-  clover) T=com.llamacpp.server;  TP=8000; O=com.k2horizon.server; OP=8001;;
++  clover) T=com.llamacpp.server;  TP=8000; O=com.k2horizon.server; OP=8001; launchctl print gui/$(id -u)/com.bonsai.server >/dev/null 2>&1 && O=com.bonsai.server;;
++  bonsai) T=com.bonsai.server;    TP=8001; O=com.llamacpp.server; OP=8000;;
+   mova)   T=com.k2horizon.server; TP=8001; O=com.llamacpp.server;  OP=8000;;
+-  *) echo "usage: swap.sh clover|mova" >&2; exit 2;;
++  *) echo "usage: swap.sh clover|mova|bonsai" >&2; exit 2;;
+ esac
+ log(){ echo "$(date +%T) swap[$1]: $2" | tee -a "${LOG:-/dev/null}" >&2; }
+ die(){ log "$1" "FAILED: $2"; exit 1; }
+--- a/evals/3-rocket-game/bin/run_cell.sh
++++ b/evals/3-rocket-game/bin/run_cell.sh
+@@ -5,7 +5,7 @@
+ set -u; source "$(dirname "$0")/env.sh"
+ check_run || { echo "RUN must be an existing directory <path under your home>/runs/<id> (run bin/init_run.sh and source runs/CURRENT.env)"; exit 1; }
+ TRACK=$1; MODEL=$2; MIN=${3:-120}; CAP=${4:-400}; IDLE=1200; CELL=$TRACK-$MODEL; T0=$(date +%s)
+-case $MODEL in clover) AGENT=kilo;; mova) AGENT=pi;; *) echo bad model; exit 2;; esac
++case $MODEL in clover) AGENT=kilo;; mova|bonsai) AGENT=pi;; *) echo bad model; exit 2;; esac
+ case $TRACK in G) BASE=$ROCKET/base-godot;; P) BASE=$ROCKET/base-python;; *) echo bad track; exit 2;; esac
+ PROMPT="$(python3 "$ROOT/bin/render_prompt.py" "${PROMPT_FILE:-$ROOT/prompts/$TRACK.txt}")" || { echo "prompt rendering failed; nothing was started"; exit 2; }
+ D=$RUN/$CELL; WORK=$D/work; mkdir -p "$RUN" && mkdir "$D" 2>/dev/null || { echo "cell directory $D already exists (or RUN unusable); use a new run directory"; exit 1; }

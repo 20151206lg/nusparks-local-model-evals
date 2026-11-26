@@ -1,0 +1,6 @@
+Your round-1 code was checked by actually running it. Two defects were demonstrated:
+
+1. Valid requests are rejected. POST /openrtb2/auction with a well-formed body returns 400 instead of 200 or 204. Your own tests test_valid_request_200_well_formed and test_all_below_floor_204 fail with "400 != 200" and "400 != 204".
+2. The Python process does not exit promptly while a partner is still sleeping. With a partner whose latency is 20 seconds, a script that handles one request and then ends takes about 20 seconds to exit (a partner that never returns would block exit forever).
+
+You now have bash, which overrides the "no shell" bullet in TASK.md: run the tests before you finish and again after your last edit. Use `timeout 120` on every command that runs tests or the server. Fix both defects. Keep everything under pi-k2-rtb/ and do not edit TASK.md. When you finish, list what you changed and say whether `python3 -m unittest -v` passes.

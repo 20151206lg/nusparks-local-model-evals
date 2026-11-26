@@ -21,3 +21,12 @@ Each item was hit during a real run.
 **Engine specifics (rocket game)**
 13. Panda3D: Enter is the `enter` event, not `return`; `task.dt` is the task's own run time, not the frame time (use `globalClock.getDt()`); test with a non-real-time clock for determinism.
 14. Godot headless: `--headless --fixed-fps 60 --script` plus `Input.parse_input_event` drives a game deterministically; give any probe that searches a policy grid a very long game-time watchdog.
+
+**Local model servers and settings (eval 4)**
+15. launchd keeps the job definition it loaded: editing a LaunchAgent plist and running `launchctl kickstart -k` restarts the OLD command line, so a flag test can silently test nothing. Use `launchctl bootout` then `bootstrap`, and check the live arguments with `ps -o args= -p <pid>`.
+16. Check the thinking mode on the live server with a bare request (reasoning characters should be 0 when you meant it off). Bonsai thinks by default (`xhigh`); `chat_template_kwargs {"enable_thinking": false}` turns it off; we started one run at `medium` by mistake; a quick count of completed reasoning blocks was misleading because unfinished reasoning was still streaming, so verify with the full output, not a partial count.
+17. Multi-token prediction (MTP) is not automatically faster: on stock llama.cpp b12387 with Metal it was about 21% slower for this model (24.1 against about 19 tok/s), and the model card's gain is for another file type on the maker's own fork. Measure on and off with the live server flags verified (item 15).
+18. A rewrite that fixes one defect can regress what the previous fix guarded: moving the fan-out from a thread pool to threads fixed the exit hang and let late bids a few milliseconds past the deadline win. Re-run the earlier boundary probes after every rewrite.
+19. A test of a helper function in isolation does not guard that the helper is used: bypass the call in a copy (keep every bid) and see whether any test fails.
+20. Timing probes that sleep: `sleep(80 ms)` in a thread arrives at about 87 ms on this Mac. Probe with margins of at least 10 ms, or give the code a patchable clock and test the deadline rule with a fake one (the only approach that guarded the 10 ms headroom rule).
+

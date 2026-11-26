@@ -2,15 +2,16 @@
 
 How we test whether a **local** AI coding model can do real work, and how we check the result without trusting the model's own report. Companion to the posts on [nusparks.fyi](https://nusparks.fyi/): [Four local AI coding runs, zero playable rocket games](https://nusparks.fyi/posts/mac-local-models-rocket-game/) and its predecessor [We tried building a rocket game with local AI](https://nusparks.fyi/posts/local-models-rocket-game-godot-panda3d/). The procedures in this repository were run on one Apple M3 Max Mac (36 GB unified memory) with open-weight models served by `llama.cpp`. The scripts and server management are written for macOS (bash 3.2, LaunchAgents); on Linux you would need to adapt them, and we have not tested that.
 
-> Each test below is **one or two runs per setup, on one machine**: individual observations that show where a setup got stuck, not a ranking of models. Eval 2 and 3 are *historical procedures*: they document what we ran and the scripts we used, and need adapting (see each folder) before you can rerun them.
+> Each test below is **one or two runs per setup, on one machine**: individual observations that show where a setup got stuck, not a ranking of models. Eval 2, 3 and 4 are *historical procedures*: they document what we ran and the scripts we used, and need adapting (see each folder) before you can rerun them.
 
-## The three evaluations
+## The four evaluations
 
 | # | Folder | Question | Order to run |
 |---|---|---|---|
 | 1 | [`evals/1-rtb-single-agent`](evals/1-rtb-single-agent/) | Can one local coder + agent build a latency-bounded second-price ad exchange from a spec, and how many rounds of expert review does it need? | first, one model at a time |
 | 2 | [`evals/2-rtb-coder-reviewer-pipeline`](evals/2-rtb-coder-reviewer-pipeline/) | Does adding a second local model as reviewer (one coder, one reviewer, a hosted assistant orchestrating) make the loop converge faster? | after #1 |
 | 3 | [`evals/3-rocket-game`](evals/3-rocket-game/) | Two local coder/agent pairs on a small 3D game, with and without Godot, judged by independent black-box checks | any time; needs Godot and Panda3D |
+| 4 | [`evals/4-bonsai-solo`](evals/4-bonsai-solo/) | One small ternary model (7.9 GB) on evals 1 and 3 with thinking off | after #1 and #3 |
 
 Shared notes: [`docs/models-and-hardware.md`](docs/models-and-hardware.md) (exact models, quantizations, server flags), [`docs/lessons.md`](docs/lessons.md) (traps that cost us time, so they do not cost you).
 

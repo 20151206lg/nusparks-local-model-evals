@@ -1,0 +1,6 @@
+Your round-2 code was checked again by running it. Two defects were demonstrated:
+
+1. A bid that arrives a few milliseconds after the shared deadline can still win. With tmax 100 (deadline 90 ms), a partner with latency 97 ms won the auction in 3 of 30 trials, and a partner with latency 95 ms did the same; your round-1 code rejected all 30. Only bids that arrived by the deadline may take part in the auction.
+2. No test fails if the exit fix is undone. Changing `daemon=True` to `daemon=False` in rtb/exchange.py leaves all 20 tests passing, so a regression of the process-exit problem would go unnoticed.
+
+Fix defect 1, and add a test that fails when defect 2 is put back, and tell me how you verified it. Run the whole suite at least 10 times to check that it is stable and does not hang. Use `timeout 120` on every command that runs tests or the server. Keep everything under pi-k2-rtb/ and do not edit TASK.md. When you finish, list what you changed and say whether `python3 -m unittest -v` passes.

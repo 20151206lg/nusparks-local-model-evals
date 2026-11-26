@@ -1,0 +1,3 @@
+#!/bin/bash
+echo "denied: brew is not available in this experiment (no downloads, no installs, no process killing)" >&2
+exit 126

@@ -1,0 +1,1 @@
+Read pi-k2-rtb/TASK.md completely and do everything it asks. Work from the current directory. Follow the "When you finish" section.
