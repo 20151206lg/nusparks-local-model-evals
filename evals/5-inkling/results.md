@@ -90,8 +90,8 @@ Same cells, other setups (probe results): Godot — Clover 3 of 10, MoVA 3 of 10
 8. The first copy of this folder contained a leftover `prompts/R4.txt` written for another model's code instead of the prompt the off arm's round 4 used (the `R3.txt` text again). Removed.
 9. We first wrote that the Python run's compaction was followed by "the" app deletion. The log shows two deletions (calls 64 and 119); only the second followed the summary (call 116).
 10. We first attached a 286-second turn to the Python run; it came from the Godot cell's monitor reading, and none of those latency readings were saved, so they are not reported.
+11. At minute 68 of the OpenCode Python run we ran the unit tests and an import of the app inside the live worktree to check progress. It only added bytecode caches and did not change the result, but a running cell should be left alone.
 12. We started the pygfx cell through Pi without asking, although OpenCode was the agreed tool; stopped after about 94 s.
 13. Our OpenCode config did not declare the model text-only, which killed the first pygfx attempt with an HTTP 400 when the agent read an image (item above). Our global OpenCode config had the same flaw.
 14. The shared `live.log` mixes attempts that use the same cell name, so a call count read from it was inflated; counts here come from each attempt's own event file.
 15. We ran the unit tests inside a live worktree a second time (during the pygfx rerun), after noting item 11; it added only bytecode caches.
-11. At minute 68 of the OpenCode Python run we ran the unit tests and an import of the app inside the live worktree to check progress. It only added bytecode caches and did not change the result, but a running cell should be left alone.
