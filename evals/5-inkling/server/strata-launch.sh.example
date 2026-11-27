@@ -4,7 +4,7 @@
 # SQ-20 is the 19.35 GB pack; it needs ~24 GB of GPU memory at a 128K context, so nothing else big may be loaded on a 36 GB Mac.
 strata launch --family inkling-2-mini --model sq-20 --context 128k --parallel 1 --vision off --tune skip \
   --access local --port 8001 --yes --no-tui
-# Strata measured its own draft decoding (DSpark) at 1.09x here, under its 1.10x bar, and left it OFF: plain decoding, about 33 tok/s.
+# Strata measured its own draft decoding (DSpark) at 1.07x on one launch and 1.09x on another here, under its 1.10x bar, and left it OFF: plain decoding, about 33 tok/s.
 # Check it, and check the thinking mode with a bare request (thinking is ON by default; effort levels none/minimal/low/medium/high/xhigh):
 curl -s http://127.0.0.1:8001/v1/models | head -c 300; echo
 curl -s http://127.0.0.1:8001/v1/chat/completions -H 'content-type: application/json' \

@@ -48,7 +48,7 @@ llama-server -m $MODELS/Ternary-Bonsai-2.5-27B-Q2_0-mtp.gguf -ngl 99 -c 131072 -
 Server command for Inkling (eval 5; see `evals/5-inkling/server/strata-launch.sh.example`). Strata runs as a detached daemon, not as llama.cpp, so there are no llama-server flags:
 
 ```bash
-# Inkling (port 8001): 128K context, one request at a time, vision off, localhost only; draft decoding left off by Strata's own test (1.09x < 1.10x)
+# Inkling (port 8001): 128K context, one request at a time, vision off, localhost only; draft decoding left off by Strata's own test (measured 1.07x and 1.09x, below its 1.10x bar)
 strata launch --family inkling-2-mini --model sq-20 --context 128k --parallel 1 --vision off --tune skip \
   --access local --port 8001 --yes --no-tui
 ```

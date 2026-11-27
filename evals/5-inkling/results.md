@@ -8,14 +8,16 @@ Same model, server (128K context, Strata's draft decoding off), harness and task
 
 | | thinking OFF | MEDIUM |
 |---|---|---|
-| round 1 (no shell) | 320 calls, never finished (it re-read `exchange.py` 116 times), stopped by the call cap; the task's own test command found 0 tests; one wrong test; the process hung at exit | 28 calls, 17.4 min, finished with a report; 17 tests via the task's own command; one latency defect (always waits the full deadline) |
+| round 1 (no shell) | 320 calls, never finished: 195 were reads of `rtb/exchange.py` (180 of the whole file; 305 reads in all). Our call cap (250) fired at call 251 but did not stop Pi (the pid bug below); the round was stopped by hand at 320. The task's own test command found 0 tests; one wrong test; the process hung at exit | 28 calls, 17.4 min, finished with a report; 17 tests via the task's own command; one latency defect (always waits the full deadline) |
 | round 2 | 24 calls, 6.5 min, in a fresh session (the first attempt, in the 108K-token session carried over from round 1, was aborted); direct probes 31/31, tests catch 11 of 17 re-introduced bugs | 35 calls, 27.2 min: probes 34/34, tests catch 15 of 17 |
-| round 3 | no change in 294 calls (it spent them digging through the history of one test file); the cap did not stop it (harness bug, below) and it was stopped by hand | 11 calls, 4.6 min: 25 tests, probes 34/34, mutations 17/17 |
-| round 4 | rerun after a mis-directed first attempt: 50 calls, 15.2 min, 21 tests, probes 31/31, mutations 16 of 18; the headroom test checks only the constant | not needed |
+| round 3 | no change in 294 calls (it spent them digging through the history of one test file); the cap did not stop it (the same harness bug) and it was stopped by hand | 11 calls, 4.6 min: 25 tests, probes 34/34, mutations 17/17 in the standard batch |
+| round 4 | rerun after a first attempt that ran in the wrong worktree (discarded): 50 calls, 15.2 min, 21 tests, probes 31/31, mutations 16 of 18 in the standard batch (one of the two survivors is equivalent to the original code); the separate check that the 10 ms headroom is actually used is still missed (the test checks only the constant). The valid round 4 used the same fix-list text as round 3 (`prompts/R3.txt`), because round 3 had made no change | not needed |
 | exchange behaves correctly after | round 2 | round 2 |
-| tests able to fail after | round 4 (one failed round and one invalid attempt in between); the headroom guard is weak | round 3, all 18 mutation checks, including the "headroom is used" check |
-| agent time / tool calls | about 106 min / 688 | 49 min / 74 |
-| reasoning characters emitted | 75,026 over 688 calls, in a minority of turns (13 of 320, 8 of 25, 8 of 292, 7 of 51) | 144,783 over 74 calls (27 of 29, 28 of 36, 7 of 12 turns) |
+| tests able to fail after | round 4 (one failed round and one invalid attempt in between); the headroom guard is weak | round 3: 17 of 17 in the standard batch plus the separate "headroom is used" check (18 in all) |
+| agent time / tool calls | about 105 min (43:10 + 6:31 + 39:49 + 15:11 = 104:41 from the timeline) / 688 | 49:11 / 74 |
+| reasoning characters emitted | 75,026 over 688 calls, in 36 of 688 replies (13 of 320, 8 of 25, 8 of 292, 7 of 51) | 144,783 over 74 calls, in 62 of 77 replies (27 of 29, 28 of 36, 7 of 12) |
+
+Prompts: the exact prompts used are in `prompts/` (`C1.txt` for round 1 of both arms; `R2.txt` and `R3.txt` for the off arm, with its round 4 repeating `R3.txt`; `R2m.txt` and `R3m.txt` for the medium arm). An earlier copy of this folder held a leftover `R4.txt` written for another model's code; it was removed.
 
 Probes and mutation checks: `accept/probe_rtb.py` and `mutate_rtb.py` (the off arm's API), `probe_rtb_medium.py` and `mutate_rtb_medium.py` (the medium arm's API); both are tied to the code each arm wrote.
 
@@ -33,9 +35,9 @@ Same task, earlier solo runs (exchange correct / tests able to fail): K2-Horizon
 
 - Ended on the **wall cap** (90 min, exit 124), 166 tool calls, no final answer.
 - `controller.py` (118 lines) and 11 tests of its own took about 3.5 minutes according to its log. Our controller probe: **14 of 14 checks match the reference** (11 scenario comparisons, countdown timing, 300 random traces, no engine imports in the controller).
-- The remaining calls went into the app: `app.py` was written five times (calls 49, 54, 65, 120 and 149), with long detours into Panda3D internals (vertex-data formats, camera lens and matrix maths, `CommonFilters` and `FilterManager`, light classes, then `renderFrame` and the task loop). Pi's automatic compaction ran once, at about 55 minutes, and worked (a summary was written). About two minutes later the agent deleted its 520-line `app.py` and wrote a new one. We did not establish that the compaction caused the restart.
+- The remaining calls went into the app: `app.py` was written five times (calls 49, 54, 65, 120 and 149), with long detours into Panda3D internals (vertex-data formats, camera lens and matrix maths, `CommonFilters` and `FilterManager`, light classes, then `renderFrame` and the task loop). It deleted `app.py` twice, at calls 64 and 119, each time followed by a rewrite. Pi's automatic compaction ran once, at call 116 (reason "threshold", a summary was written and the run continued), so only the second deletion followed it, by three calls. We did not establish that the compaction caused that rewrite.
 - The final `app.py` **crashes on start**: `LaunchApp.__init__` calls `self.base.setTitle(...)`, which `ShowBase` does not have (`AttributeError`). We reproduced it by running the file on a copy. Our app probe therefore fails every scenario (0 of 9). The last 14 calls were still debugging how to step the render loop. Its `experiment-log.md` still says milestone 2 (the application) is "Not started".
-- Reasoning: 168,273 thinking characters, in 97 of 162 assistant turns. Prompts reached 114K of the 131K-token window before the compaction; at that context a turn took 16 to 52 s.
+- Reasoning: 168,273 thinking characters, in 97 of 162 assistant turns. The session had grown to about 115K of the 131K-token window when Pi summarized it. (We saw single reasoning-heavy turns take minutes in Strata's monitor in both rocket cells, but those readings were not saved and are not reported.)
 - Not playable.
 
 Same cells, other setups (probe results): Godot — Clover 3 of 10, MoVA 3 of 10, Bonsai 3 of 10. Python controller — Clover 4 of 14, MoVA 13 of 14, Bonsai 14 of 14; app — Clover cannot start, MoVA frozen, Bonsai none.
@@ -48,3 +50,8 @@ Same cells, other setups (probe results): Godot — Clover 3 of 10, MoVA 3 of 10
 4. A wait loop returned early on a stale "committed" line; one of our probes assumed another implementation's default partner prices (the code was right).
 5. The rocket Python cell was started with `a && b && nohup c &`, which backgrounds the whole chain; harmless here, but use `(nohup c > file 2>&1 &)`.
 6. The Godot probe has 10 checks plus one that runs only if a game can be won, and we first wrote "the probe has 11 checks"; the untouched project scores 3 of 10.
+7. Our first write-up said the thinking-off round 1 "re-read `exchange.py` 116 times". A recount from the agent log (done after an outside review) gives 195 reads of that file (180 of the whole file). The same write-up said the call cap stopped the round; it fired but did not stop Pi (item 1).
+8. The first copy of this folder contained a leftover `prompts/R4.txt` written for another model's code instead of the prompt the off arm's round 4 used (the `R3.txt` text again). Removed.
+9. We first wrote that the Python run's compaction was followed by "the" app deletion. The log shows two deletions (calls 64 and 119); only the second followed the summary (call 116).
+10. We first attached a 286-second turn to the Python run; it came from the Godot cell's monitor reading, and none of those latency readings were saved, so they are not reported.
+
