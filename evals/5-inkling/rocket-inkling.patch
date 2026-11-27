@@ -1,0 +1,78 @@
+diff --git a/evals/3-rocket-game/bin/accept_watch.sh b/evals/3-rocket-game/bin/accept_watch.sh
+index d000c71..1695672 100755
+--- a/evals/3-rocket-game/bin/accept_watch.sh
++++ b/evals/3-rocket-game/bin/accept_watch.sh
+@@ -1,7 +1,7 @@
+ #!/bin/bash
+ # accept_watch.sh : run the no-screenshot acceptance of each cell as soon as its END line appears. Needs RUN.
+ source "$(dirname "$0")/env.sh"
+-for CELL in G-clover P-clover G-mova P-mova; do
++for CELL in ${CELLS:-G-clover P-clover G-mova P-mova}; do  # CELLS="G-inkling P-inkling" for the Inkling run
+   waited=0
+   until grep -q "$CELL END\|$CELL ABORT" "$RUN/timeline.log"; do sleep 20; waited=$((waited+20)); [ "$waited" -ge "${MAX_WAIT_S:-14400}" ] && { tl.sh "$CELL acceptance gave up waiting (${MAX_WAIT_S:-14400}s)"; break; }; done
+   grep -q "$CELL ABORT" "$RUN/timeline.log" && continue
+diff --git a/evals/3-rocket-game/bin/capwatch.py b/evals/3-rocket-game/bin/capwatch.py
+index 4430f17..c475e3b 100755
+--- a/evals/3-rocket-game/bin/capwatch.py
++++ b/evals/3-rocket-game/bin/capwatch.py
+@@ -10,7 +10,14 @@ def stop(tag, val):
+     global fired
+     if fired: return
+     fired = True; open(pf + "." + tag, "w").write(str(val))
+-    try: os.kill(int(open(pf).read().strip()), signal.SIGTERM)
++    try:
++        pid = int(open(pf).read().strip()); os.kill(pid, signal.SIGTERM)
++        def hard():  # an agent that ignores SIGTERM (seen once: Pi kept running after the cap) gets SIGKILL after 10 s, children first
++            time.sleep(10)
++            try:
++                import subprocess; subprocess.run(["pkill", "-KILL", "-P", str(pid)]); os.kill(pid, signal.SIGKILL)
++            except Exception: pass
++        threading.Thread(target=hard, daemon=True).start()
+     except Exception as e: sys.stderr.write(f"capwatch: kill failed: {e}\n")
+ def watch():
+     while not done:
+diff --git a/evals/3-rocket-game/bin/run_cell.sh b/evals/3-rocket-game/bin/run_cell.sh
+index 136ad91..461b54c 100755
+--- a/evals/3-rocket-game/bin/run_cell.sh
++++ b/evals/3-rocket-game/bin/run_cell.sh
+@@ -1,11 +1,11 @@
+ #!/bin/bash
+-# run_cell.sh G|P clover|mova [wall_min] [tool_cap] : one experiment cell. Fresh clone of the base repo, preflight (untouched repo
++# run_cell.sh G|P clover|mova|inkling [wall_min] [tool_cap] : one experiment cell. Fresh clone of the base repo, preflight (untouched repo
+ # passes its own checks), swap to the model's server, run the agent (Kilo for clover, Pi for mova) with a tool-call cap, an idle cap and a wall cap,
+ # then reap leftovers, commit whatever is left, snapshot. Needs RUN. No retry after a cap/timeout.
+ set -u; source "$(dirname "$0")/env.sh"
+ check_run || { echo "RUN must be an existing directory <path under your home>/runs/<id> (run bin/init_run.sh and source runs/CURRENT.env)"; exit 1; }
+ TRACK=$1; MODEL=$2; MIN=${3:-120}; CAP=${4:-400}; IDLE=1200; CELL=$TRACK-$MODEL; T0=$(date +%s)
+-case $MODEL in clover) AGENT=kilo;; mova) AGENT=pi;; *) echo bad model; exit 2;; esac
++case $MODEL in clover) AGENT=kilo;; mova|inkling) AGENT=pi;; *) echo bad model; exit 2;; esac
+ case $TRACK in G) BASE=$ROCKET/base-godot;; P) BASE=$ROCKET/base-python;; *) echo bad track; exit 2;; esac
+ PROMPT="$(python3 "$ROOT/bin/render_prompt.py" "${PROMPT_FILE:-$ROOT/prompts/$TRACK.txt}")" || { echo "prompt rendering failed; nothing was started"; exit 2; }
+ D=$RUN/$CELL; WORK=$D/work; mkdir -p "$RUN" && mkdir "$D" 2>/dev/null || { echo "cell directory $D already exists (or RUN unusable); use a new run directory"; exit 1; }
+@@ -19,8 +19,13 @@ else
+ fi
+ git -C "$WORK" status --short > "$D/preflight-status.txt"
+ tl.sh "$CELL preflight ok"
+-swap.sh $MODEL || { tl.sh "$CELL ABORT swap $MODEL failed"; exit 1; }
+-tl.sh "$CELL swap to $MODEL ok"
++if [ $MODEL = inkling ]; then  # Strata is its own daemon on :8001 (not a LaunchAgent in this setup): only check that it answers and that nothing else holds :8000
++  curl -sf -m 20 http://127.0.0.1:8001/v1/models | grep -q inkling-2-mini-sq-20 && ! lsof -nP -iTCP:8000 -sTCP:LISTEN >/dev/null 2>&1 || { tl.sh "$CELL ABORT Strata not ready on :8001 or :8000 busy"; exit 1; }
++  tl.sh "$CELL Strata ready (no swap)"
++else
++  swap.sh $MODEL || { tl.sh "$CELL ABORT swap $MODEL failed"; exit 1; }
++  tl.sh "$CELL swap to $MODEL ok"
++fi
+ PF="$D/agent.pid"; rm -f "$PF" "$PF".count "$PF".capped "$PF".idle
+ tl.sh "$CELL AGENT start"; T1=$(date +%s)
+ ( cd "$WORK" && run_agent.sh $AGENT "$PF" $((MIN*60)) "$PROMPT" 2>"$D/agent.err" ) \
+diff --git a/evals/3-rocket-game/bin/run_inkling.sh b/evals/3-rocket-game/bin/run_inkling.sh
+new file mode 100755
+index 0000000..548b409
+--- /dev/null
++++ b/evals/3-rocket-game/bin/run_inkling.sh
+@@ -0,0 +1,5 @@
++#!/bin/bash
++# run_inkling.sh [G] [P] : the Inkling cells (Godot, then Python/Panda3D), each with a wall cap of 90 min and a 400 tool-call cap. Needs RUN. Strata must already be serving on :8001.
++source "$(dirname "$0")/env.sh"
++for c in ${@:-G P}; do run_cell.sh $c inkling 90 400; done
++tl.sh "ALL CELLS DONE"

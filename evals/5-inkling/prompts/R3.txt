@@ -1,0 +1,8 @@
+Your round-2 code was checked again by running it. The behaviour is correct, but four rules have no test that fails without them. In copies of the code, each of these changes left all 16 tests passing:
+
+1. Changing `daemon=True` to `daemon=False` for the partner threads in rtb/exchange.py (the process then hangs at exit again while a partner is sleeping).
+2. Removing the check that ignores bids with a price of zero or less in rtb/auction.py.
+3. Ignoring the order in which partners answered when two bids tie exactly (both ignoring `answer_seq` in the ranking, and never recording it in the exchange).
+4. Setting the 10 ms headroom (`HEADROOM_MS`) to 0.
+
+Add tests, or fix existing ones, so that each of these changes makes at least one test fail. The tests must be deterministic and must not depend on sleeping close to the deadline (timers on this Mac overshoot by 5 to 10 ms). Verify it yourself by temporarily breaking the code in a copy (not in the real files) and showing that a test fails, then confirm the whole suite passes on the real code. Run the whole suite at least 10 times to check that it is stable and does not hang. Use `timeout 120` on every command that runs tests or the server. Keep everything under pi-k2-rtb/ and do not edit TASK.md. When you finish, list what you changed and say whether `python3 -m unittest -v` passes and how many tests it ran.

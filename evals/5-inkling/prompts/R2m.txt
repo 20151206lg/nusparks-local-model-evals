@@ -1,0 +1,12 @@
+Your round-1 code was checked by actually running it. Two behaviours were demonstrated:
+
+1. The exchange always waits out the whole deadline, even when every partner has already answered. With two partners that answer in 5 ms and 10 ms and tmax 100, handling one request takes about 91 ms. It should return as soon as every partner has answered or failed, or the deadline passes, whichever comes first.
+2. The seat of a winning bid is found by looking up the bid's id, so when two partners return the same bid id the winner can be credited to the wrong partner. The seat must come from the partner that returned the bid.
+
+Also, three rules have no test that fails without them. In copies of the code, each of these changes left all 17 tests passing:
+
+3. Changing `daemon=True` to `daemon=False` for the partner threads in rtb/exchange.py (the process then hangs at exit again while a partner is sleeping).
+4. Setting the 10 ms headroom (`HEADROOM_MS`) to 0.
+5. Ignoring the order in which partners answered when two bids tie exactly (the arrival index `t[0]` in the ranking key in rtb/auction.py).
+
+You now have bash, which overrides the "no shell" bullet in TASK.md: run the tests before you finish and again after your last edit. Fix 1 and 2, and add or fix tests so that each of the changes in 1 to 5 makes at least one test fail. The tests must be deterministic and must not depend on sleeping close to the deadline (timers on this Mac overshoot by 5 to 10 ms). Verify it yourself by temporarily breaking the code in a copy (not in the real files) and showing that a test fails, then confirm the whole suite passes on the real code. Run the whole suite at least 10 times to check that it is stable and does not hang. Use `timeout 120` on every command that runs tests or the server. Keep everything under pi-k2-rtb/ and do not edit TASK.md. When you finish, list what you changed and say whether `python3 -m unittest -v` passes and how many tests it ran.

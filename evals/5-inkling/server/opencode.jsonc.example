@@ -1,0 +1,28 @@
+{
+  // OpenCode 2.x (brew install opencode; V2 config format, the old `provider` key is deprecated): ~/.config/opencode/opencode.jsonc
+  // OpenCode does not send reasoning_effort itself, so it is injected with `body`. Schema: https://opencode.ai/config.json
+  "$schema": "https://opencode.ai/config.json",
+  "model": "strata/inkling-2-mini-sq-20",
+  "small_model": "strata/inkling-2-mini-sq-20",
+  "providers": {
+    "strata": {
+      "name": "Inkling 2 Mini SQ-20 (local, Strata)",
+      "package": "@opencode/ai/providers/openai-compatible",
+      "settings": { "baseURL": "http://127.0.0.1:8001/v1" },
+      "models": {
+        "inkling-2-mini-sq-20": {
+          "name": "Inkling 2 Mini SQ-20 (local, medium effort)",
+          "capabilities": { "tools": true },
+          "body": { "reasoning_effort": "medium" },
+          "limit": { "context": 131072, "output": 16384 }
+        }
+      }
+    }
+  },
+  "permission": {
+    "read": "allow",
+    "edit": "ask",
+    "bash": { "*": "ask", "ls *": "allow", "head *": "allow", "tail *": "allow", "grep *": "allow", "echo *": "allow" },
+    "webfetch": "ask"
+  }
+}

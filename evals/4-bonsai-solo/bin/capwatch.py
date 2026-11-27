@@ -10,7 +10,14 @@ def stop(tag, val):
     global fired
     if fired: return
     fired = True; open(pf + "." + tag, "w").write(str(val))
-    try: os.kill(int(open(pf).read().strip()), signal.SIGTERM)
+    try:
+        pid = int(open(pf).read().strip()); os.kill(pid, signal.SIGTERM)
+        def hard():  # a round that ignores SIGTERM (seen once: Pi kept running after the cap) gets SIGKILL after 10 s, children first
+            time.sleep(10)
+            try:
+                import subprocess; subprocess.run(["pkill", "-KILL", "-P", str(pid)]); os.kill(pid, signal.SIGKILL)
+            except Exception: pass
+        threading.Thread(target=hard, daemon=True).start()
     except Exception as e: sys.stderr.write(f"capwatch: kill failed: {e}\n")
 def watch():
     while not done:

@@ -1,0 +1,29 @@
+{
+  "_comment": "The provider block added under providers in ~/.pi/agent/models.json (Pi 1.5.2). Pi's thinking level (off/minimal/low/medium/high/xhigh) is mapped to chat_template_kwargs; the runs used `off` and `medium`.",
+  "inkling": {
+    "baseUrl": "http://127.0.0.1:8001/v1",
+    "api": "openai-completions",
+    "apiKey": "unused",
+    "compat": {
+      "thinkingFormat": "chat-template",
+      "chatTemplateKwargs": {
+        "enable_thinking": { "$var": "thinking.enabled" },
+        "reasoning_effort": { "$var": "thinking.effort", "omitWhenOff": true }
+      },
+      "maxTokensField": "max_tokens",
+      "supportsDeveloperRole": false
+    },
+    "models": [
+      {
+        "id": "inkling-2-mini-sq-20",
+        "name": "Inkling 2 Mini SQ-20 (local Strata)",
+        "reasoning": true,
+        "thinkingLevelMap": { "minimal": "minimal", "low": "low", "medium": "medium", "high": "high", "xhigh": "xhigh", "max": null },
+        "contextWindow": 131072,
+        "maxTokens": 16384,
+        "input": ["text"],
+        "samplingParams": { "temperature": 1.0 }
+      }
+    ]
+  }
+}

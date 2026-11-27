@@ -12,6 +12,7 @@ How we test whether a **local** AI coding model can do real work, and how we che
 | 2 | [`evals/2-rtb-coder-reviewer-pipeline`](evals/2-rtb-coder-reviewer-pipeline/) | Does adding a second local model as reviewer (one coder, one reviewer, a hosted assistant orchestrating) make the loop converge faster? | after #1 |
 | 3 | [`evals/3-rocket-game`](evals/3-rocket-game/) | Two local coder/agent pairs on a small 3D game, with and without Godot, judged by independent black-box checks | any time; needs Godot and Panda3D |
 | 4 | [`evals/4-bonsai-solo`](evals/4-bonsai-solo/) | One small ternary model (7.9 GB) on evals 1 and 3 with thinking off | after #1 and #3 |
+| 5 | [`evals/5-inkling`](evals/5-inkling/) | Inkling 2 Mini (19 GB pack, served by Strata) on evals 1 and 3: the ad exchange with thinking off and at medium, the rocket game at medium | after #1 and #3 |
 
 Shared notes: [`docs/models-and-hardware.md`](docs/models-and-hardware.md) (exact models, quantizations, server flags), [`docs/lessons.md`](docs/lessons.md) (traps that cost us time, so they do not cost you).
 

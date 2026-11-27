@@ -1,0 +1,7 @@
+#!/bin/bash
+# npm shim: blocks installs and the commands that open a long-running window; everything else passes through
+case "$1 $2" in
+  "install "*|"i "*|"ci "*|"add "*|"update "*|"run game"|"run godot"|"run preview"|"run setup:preview"|"exec "*) echo "denied: npm $1 $2 is not available in this experiment (no installs; no interactive editor/game/preview windows)" >&2; exit 126;;
+esac
+[ "$1" = npx ] && { echo "denied: npx" >&2; exit 126; }
+exec /opt/homebrew/bin/npm "$@"

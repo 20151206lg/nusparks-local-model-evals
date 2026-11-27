@@ -8,6 +8,7 @@ Hardware: Apple M3 Max (30-core GPU), 36 GB unified memory, macOS. Two large mod
 | Coder or reviewer | K2-Horizon-MoVA-36B-A4B (IFM) | IQ4_XS GGUF, 20.4 GB, by [`bartowski`](https://huggingface.co/bartowski/K2-Horizon-MoVA-36B-A4B-GGUF) | `llama.cpp` b12387 in the rocket game and in the second RTB pipeline run; b12063 in the first solo RTB run (with `--reasoning-format none`) | Pi 1.5.2 |
 | Coder (test 1 only) | K2-Horizon-7B (IFM) | Q8_0 GGUF, 9.6 GB (official [`IFM/K2-Horizon-7B-GGUF`](https://huggingface.co/IFM/K2-Horizon-7B-GGUF)) | `llama.cpp` b12063 | Pi 1.5.2 |
 | Coder (eval 4) | Ternary Bonsai 2.5 27B (PrismML; Qwen3.8-27B base, ternary weights) | `Ternary-Bonsai-2.5-27B-Q2_0-mtp.gguf`, 7.91 GB, from [`prism-ml/Ternary-Bonsai-2.5-27B-GGUF`](https://huggingface.co/prism-ml/Ternary-Bonsai-2.5-27B-GGUF), Apache 2.0 | stock `llama.cpp` b12387 (needs b11556 or newer for `Q2_0`) | Pi 1.5.2 |
+| Coder (eval 5) | Inkling 2 Mini (Thinking Machines Lab; 26.4B parameters, 3.4B used per token; looped transformer; Apache 2.0 with a Model Acceptable Use Policy), Strata pack SQ-20 | `Inkling-2-Mini-SQ-20.strata`, 19.35 GB, from [`strata-engine/Inkling-2-Mini-Strata`](https://huggingface.co/strata-engine/Inkling-2-Mini-Strata) | Strata 0.2.22 (engine `strata-inkling` 0.1.67, Metal; MIT licence), not llama.cpp | Pi 1.5.2 (OpenCode 2.4.1 only for a smoke test) |
 | Orchestrator and acceptance checker | a hosted assistant (Claude Code) | n/a | hosted | n/a |
 
 Server flags used for Clover and for MoVA in the rocket-game and pipeline runs (MoVA's first solo RTB run used b12063; its rerun used b12387 with default reasoning parsing before `--reasoning-format none` was added), with paths shortened (paths shortened, `$MODELS` is where you keep the GGUF files):
@@ -43,4 +44,14 @@ llama-server -m $MODELS/Ternary-Bonsai-2.5-27B-Q2_0-mtp.gguf -ngl 99 -c 131072 -
 ```
 
 `--min-p 0` overrides llama.cpp's default of 0.05 (the model card asks for it). MoVA is no longer run on the Mac that produced these results (its file was deleted on 2026-11-25); the MoVA rows above are history.
+
+Server command for Inkling (eval 5; see `evals/5-inkling/server/strata-launch.sh.example`). Strata runs as a detached daemon, not as llama.cpp, so there are no llama-server flags:
+
+```bash
+# Inkling (port 8001): 128K context, one request at a time, vision off, localhost only; draft decoding left off by Strata's own test (1.09x < 1.10x)
+strata launch --family inkling-2-mini --model sq-20 --context 128k --parallel 1 --vision off --tune skip \
+  --access local --port 8001 --yes --no-tui
+```
+
+Thinking is on by default; effort levels `none`, `minimal`, `low`, `medium`, `high` (default), `xhigh`. Measured on this Mac with thinking off: about 33 tokens per second to write, 526-623 to read a prompt, and about 24.8 of 28.1 GiB of GPU memory in use with an 88K-token prompt, so nothing else may use the GPU. Clover (about 21 GB) and Inkling (about 24 GB) cannot be loaded together on this Mac.
 

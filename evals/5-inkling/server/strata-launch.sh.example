@@ -1,0 +1,12 @@
+#!/bin/bash
+# How the Inkling runs were served: Strata 0.2.22 (engine strata-inkling 0.1.67, Metal) as a detached local daemon on :8001, no API key.
+# Install Strata from its release page (https://github.com/Niko1221/Strata/releases), read install.sh first.
+# SQ-20 is the 19.35 GB pack; it needs ~24 GB of GPU memory at a 128K context, so nothing else big may be loaded on a 36 GB Mac.
+strata launch --family inkling-2-mini --model sq-20 --context 128k --parallel 1 --vision off --tune skip \
+  --access local --port 8001 --yes --no-tui
+# Strata measured its own draft decoding (DSpark) at 1.09x here, under its 1.10x bar, and left it OFF: plain decoding, about 33 tok/s.
+# Check it, and check the thinking mode with a bare request (thinking is ON by default; effort levels none/minimal/low/medium/high/xhigh):
+curl -s http://127.0.0.1:8001/v1/models | head -c 300; echo
+curl -s http://127.0.0.1:8001/v1/chat/completions -H 'content-type: application/json' \
+  -d '{"model":"inkling-2-mini-sq-20","messages":[{"role":"user","content":"What is 17*23? Think briefly."}],"max_tokens":600,"reasoning_effort":"medium"}'
+# Stop: strata launch --stop      Status: strata status
