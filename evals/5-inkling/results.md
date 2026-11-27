@@ -54,6 +54,28 @@ Setup: the same model, server, prompt (`prompts/P.txt` of eval 3), base project 
 - Reasoning: 53,304 reasoning tokens over 110 steps (OpenCode's own count; the Pi cells above count characters, so the two are not comparable). Its `experiment-log.md` says milestone 2 is "Not started".
 - Deviation: at minute 68 we ran the unit tests and `app.py --help` in the live worktree to check progress (this created bytecode caches only).
 
+## Rocket game, Python with pygfx instead of Panda3D, through OpenCode (cell PG-inkling-oc, medium effort)
+
+Why: all five earlier Python/Panda3D cells (evals 3-5) ended with an app that did not start, each on a Panda3D API fact, and the owner suspected the engine. Ursina, a simpler layer on Panda3D, was ruled out first: its stock shaders need GLSL 1.30/1.40, which macOS OpenGL rejects, so it draws black or blank frames and no HUD text (lesson 30). pygfx renders through Metal and loaded the project's GLBs with correct colors, so we built a pygfx variant of the task ([`pygfx-track/`](pygfx-track/README.md)) and a new black-box probe, validated on a reference app (9 of 9) and on the untouched project (0 of 9). Same model, server, medium effort, caps (90 min wall, 400 tool calls, 1200 s idle) and **OpenCode 2.4.1**, with the same run config as the OpenCode Panda3D run plus a text-only model declaration (below). Pass criterion, set before the run: our app probe passes.
+
+- Ended on the **wall cap** (90 min, exit 124), 135 tool calls (133 shell, 2 read), 0 errors, no final report; the last message was mid-polish ("The overheat flow works, but the rocket mesh doesn't reset until the next frame. Let me make the key handlers refresh visuals immediately").
+- Controller: 14 of 14 matches the reference, 13 tests of its own pass; its log gives about 4 minutes for that milestone.
+- **App probe: 9 of 9, the first Python app in these evals to pass**, with the same numbers as our reference (liftoff at frame 185, 83.48 m under continuous thrust, reset works in flight and in the countdown, a burn/coast pulse reaches 150.6 m). It loads both GLBs with `gfx.load_gltf`, names the player's rocket node `OrbitalRocket`, and runs its own app repeatedly from call 77 on.
+- We looked at 3 of the 8 rendered frames: a title and controls panel, phase, fuel, heat, altitude and speed, a "YOUR ROCKET" label (the launch complex has its own prop rocket), a camera that follows the rocket in flight, and an "Engine overheated. Press Enter to reset." result overlay. The numbers in the flight frame (fuel 76.3, heat 41.4 at 14.3 m) match the Godot game's.
+- **Not done:** milestone 3. The project has only the controller tests (no integration test, no saved frames), and its `experiment-log.md` still says milestones 2 and 3 are "Not started". OpenCode summarized the conversation once, at call 89 (prompt 111,374 to 35,321 tokens); unlike the Panda3D OpenCode run, the agent kept working normally for the next 46 calls. 57,594 reasoning tokens over 131 steps.
+- **Invalid first attempt (not counted).** At call 60 of its first start the agent read a PNG of its own text test; OpenCode sent the image to Strata, which we had launched with vision off, and Strata answered HTTP 400, ending the run (exit 1, 24 min). The model entry was not declared text-only. We declared it (`capabilities.input: ["text"]`), checked that an image read now returns a "does not support image input" message instead of an error, renamed the folder and ran the cell again from scratch. The rerun is the result above.
+- **Also not counted:** a Pi cell for this track was started by mistake (the owner had settled on OpenCode) and stopped after about 94 s and 10 calls.
+
+All three Python cells for this model (the engines are not the only difference between them: the first used Pi):
+
+| engine, agent | controller probe | app probe | ended | calls |
+|---|---|---|---|---|
+| Panda3D, Pi | 14/14 | 0/9 (`setTitle` crash) | wall cap | 166 |
+| Panda3D, OpenCode | 14/14 | 0/9 (bad import, never run) | wall cap | 113 |
+| **pygfx, OpenCode** | 14/14 | **9/9** | wall cap | 135 |
+
+What this does and does not show: one run per engine, so a chance difference is possible. The pygfx variant also differs in setup: the project README states pygfx's Y-up convention and the offscreen switch, and the contract above makes the app importable, which the Panda3D probe did not need. The comparison that is cleanest is the two OpenCode cells (same agent, config and prompt apart from the engine words); the Pi cell differs in agent too. It does suggest that for this model on this Mac the Panda3D API, not the rules code or the workflow, was the sticking point.
+
 Same cells, other setups (probe results): Godot — Clover 3 of 10, MoVA 3 of 10, Bonsai 3 of 10. Python controller — Clover 4 of 14, MoVA 13 of 14, Bonsai 14 of 14; app — Clover cannot start, MoVA frozen, Bonsai none.
 
 ## Our own mistakes (kept in the record)
@@ -68,4 +90,8 @@ Same cells, other setups (probe results): Godot — Clover 3 of 10, MoVA 3 of 10
 8. The first copy of this folder contained a leftover `prompts/R4.txt` written for another model's code instead of the prompt the off arm's round 4 used (the `R3.txt` text again). Removed.
 9. We first wrote that the Python run's compaction was followed by "the" app deletion. The log shows two deletions (calls 64 and 119); only the second followed the summary (call 116).
 10. We first attached a 286-second turn to the Python run; it came from the Godot cell's monitor reading, and none of those latency readings were saved, so they are not reported.
+12. We started the pygfx cell through Pi without asking, although OpenCode was the agreed tool; stopped after about 94 s.
+13. Our OpenCode config did not declare the model text-only, which killed the first pygfx attempt with an HTTP 400 when the agent read an image (item above). Our global OpenCode config had the same flaw.
+14. The shared `live.log` mixes attempts that use the same cell name, so a call count read from it was inflated; counts here come from each attempt's own event file.
+15. We ran the unit tests inside a live worktree a second time (during the pygfx rerun), after noting item 11; it added only bytecode caches.
 11. At minute 68 of the OpenCode Python run we ran the unit tests and an import of the app inside the live worktree to check progress. It only added bytecode caches and did not change the result, but a running cell should be left alone.

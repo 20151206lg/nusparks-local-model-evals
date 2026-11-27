@@ -2,7 +2,7 @@
 
 > **Read the safety section first.** These scripts run an autonomous coding agent with a shell and run code it wrote; use a disposable environment. The rocket harness (eval 3, patched here) can **enable, disable and restart your macOS LaunchAgents** (`swap.sh`; it refuses to run unless you set `EVAL_ALLOW_SERVICE_CHANGES=1`). The Inkling cells do not call `swap.sh`: Strata runs as its own daemon (see [`server/`](server/)). See [Safety](#safety).
 
-**Question:** how does Thinking Machines Lab's Inkling 2 Mini (a 26.4B-parameter mixture-of-experts model that uses 3.4B parameters per token), packed by the Strata project as `SQ-20` and served by Strata on a Mac, do on the tasks from evals 1 and 3 — the ad-exchange task round by round, with thinking **off** and at **medium** effort, and the rocket game in Godot and in Python with Panda3D at medium, plus a second Python run through OpenCode instead of Pi? One run per arm or cell, one Mac, so these are anecdotes, not a ranking.
+**Question:** how does Thinking Machines Lab's Inkling 2 Mini (a 26.4B-parameter mixture-of-experts model that uses 3.4B parameters per token), packed by the Strata project as `SQ-20` and served by Strata on a Mac, do on the tasks from evals 1 and 3 — the ad-exchange task round by round, with thinking **off** and at **medium** effort, and the rocket game in Godot and in Python with Panda3D at medium, plus a second Python run through OpenCode instead of Pi, and the Python game again on a different engine (pygfx)? One run per arm or cell, one Mac, so these are anecdotes, not a ranking.
 
 ## Setup
 
@@ -28,9 +28,10 @@ The RTB probes and mutation checks are tied to the exchange each arm wrote (clas
 | Ad exchange, medium | Round 1 finished; exchange correct after round 2; 17 of 17 mutation checks in the standard batch caught after round 3, plus the separate 10 ms headroom check | about 49 min, 74 calls |
 | Rocket game, Godot, medium | **Playable game: our probe 11 of 11** (the probe has 10 checks and an 11th, "the round stops after a win", that runs only if some policy wins; the untouched project scores 3 of 10, the reference 11 of 11) | 41 min, 63 calls, finished |
 | Rocket game, Python/Panda3D, medium | Rules code matches the reference on 14 of 14 checks; **the app crashes at start** (`ShowBase` has no `setTitle`), so not playable | wall cap (90 min), 166 calls |
+| Rocket game, **Python/pygfx**, medium, OpenCode ([`pygfx-track/`](pygfx-track/README.md)) | Rules code matches the reference on 14 of 14 checks; **the app passes our probe 9 of 9** (the first Python app to do so); milestone 3 (integration checks) was not reached | wall cap (90 min), 135 calls |
 | Rocket game, Python/Panda3D, medium, **OpenCode instead of Pi** | Rules code matches the reference on 14 of 14 checks; **the app fails at its first import** (`CDFNode`) and was never run by the agent; not playable | wall cap (90 min), 113 calls |
 
-Details, per-round tables and our own mistakes: [`results.md`](results.md). Traps for anyone rerunning this: [`../../docs/lessons.md`](../../docs/lessons.md) items 21-27.
+Details, per-round tables and our own mistakes: [`results.md`](results.md). Traps for anyone rerunning this: [`../../docs/lessons.md`](../../docs/lessons.md) items 21-30.
 
 ## Safety
 
