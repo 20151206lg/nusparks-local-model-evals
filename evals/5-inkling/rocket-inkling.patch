@@ -32,7 +32,7 @@ index 4430f17..c475e3b 100755
  def watch():
      while not done:
 diff --git a/evals/3-rocket-game/bin/run_accept.sh b/evals/3-rocket-game/bin/run_accept.sh
-index 1b98bba..f1e92c3 100755
+index 1b98bba..9555903 100755
 --- a/evals/3-rocket-game/bin/run_accept.sh
 +++ b/evals/3-rocket-game/bin/run_accept.sh
 @@ -14,12 +14,13 @@ if [ $TRACK = G ]; then
@@ -44,9 +44,10 @@ index 1b98bba..f1e92c3 100755
 +  [ $TRACK = PG ] && { PY=$ROCKET/base-pygfx/.venv/bin/python; APPPROBE=pg_app_probe.py; }   # PG = Python/pygfx track (evals/5-inkling/pygfx-track)
    ( cd "$TMP/w" && timeout 300 $PY -m unittest discover -s python_game/tests -v >"$D/own-tests.log" 2>&1 ); UC=$?; tail -4 "$D/own-tests.log" >> "$LOGF"
    NT=$(grep -E "^Ran [0-9]+ tests?" "$D/own-tests.log" | awk '{print $2}')
-   C=$(/usr/bin/python3 "$A/p_controller_probe.py" "$SNAP" 2>>"$LOGF" | tail -1); [ -z "$C" ] && C='{"fatal":"no output"}'
+-  C=$(/usr/bin/python3 "$A/p_controller_probe.py" "$SNAP" 2>>"$LOGF" | tail -1); [ -z "$C" ] && C='{"fatal":"no output"}'
 -  if [ -n "$SHOTS" ]; then AP=$(/usr/bin/python3 "$A/p_app_probe.py" "$SNAP" "$D/shots" 2>>"$LOGF" | tail -1)
 -  else AP=$(/usr/bin/python3 "$A/p_app_probe.py" "$SNAP" 2>>"$LOGF" | tail -1); fi
++  C=$("$PY" "$A/p_controller_probe.py" "$SNAP" 2>>"$LOGF" | tail -1)   # run it with the project's own Python: the system python3 (3.9 on macOS) cannot parse `match`; [ -z "$C" ] && C='{"fatal":"no output"}'
 +  if [ -n "$SHOTS" ]; then AP=$(/usr/bin/python3 "$A/$APPPROBE" "$SNAP" "$D/shots" 2>>"$LOGF" | tail -1)
 +  else AP=$(/usr/bin/python3 "$A/$APPPROBE" "$SNAP" 2>>"$LOGF" | tail -1); fi
    [ -z "$AP" ] && AP='{"fatal":"no output"}'

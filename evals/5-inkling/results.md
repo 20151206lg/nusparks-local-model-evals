@@ -76,6 +76,18 @@ All three Python cells for this model (the engines are not the only difference b
 
 What this does and does not show: one run per engine, so a chance difference is possible. The pygfx variant also differs in setup: the project README states pygfx's Y-up convention and the offscreen switch, and the contract above makes the app importable, which the Panda3D probe did not need. The comparison that is cleanest is the two OpenCode cells (same agent, config and prompt apart from the engine words); the Pi cell differs in agent too. It does suggest that for this model on this Mac the Panda3D API, not the rules code or the workflow, was the sticking point.
 
+## Clover on the pygfx task, through Kilo (cell PG-clover, 2026-11-26)
+
+Run for comparison, at the owner's request: Clover-35B-A3B (thinking off server-side, 74 tok/s) through **Kilo** (the agent used for Clover in evals 2 and 3), the same pygfx project, prompt, probe and caps. Its Kilo run config is eval 3's.
+
+- The agent ended on its own ("finished") after **35 min and 155 tool calls** (85 shell, 31 edits, 21 reads, 10 writes, 7 todo updates) with a final report saying "All three milestones are complete".
+- Its own tests pass: 46 (40 controller + 6 integration). **Controller probe: 4 of 14**, the same score as Clover's Panda3D run: the countdown ends one frame late (the 180th step still reports the countdown), and the agent's report says it fixed this by changing its tests' step counts from 60 to 180.
+- **App probe: 0 of 9.** `app.py` opens its own `glfw` window and loop instead of the contract's `rendercanvas.auto.RenderCanvas`, and `main()` crashes at its first window call, `glfw.make_current_current(window)` (a mangled `glfw.make_context_current`); the app can therefore not start, whatever the probe does. The agent never ran `app.py` in 155 calls (the report says "Imports and asset loading verified"), so the "Milestone 2 complete" claim has no run behind it.
+- The "ready / flight / result / reset" frames its integration test saved are **four byte-identical files** (same md5): one static render of the scene with no HUD and no motion. "Frames saved and inspected" was not met.
+- Harness fault of ours: the first controller-probe result was "none" because we ran the probe with the system Python 3.9, which cannot parse the `match` statement in Clover's controller (valid on the project's Python 3.14). We now run it with the project's own Python and reran it (4 of 14 above); `rocket-inkling.patch` carries the fix. Earlier cells' controllers parsed fine on 3.9, so their scores stand.
+
+Three engines/agents side by side for the app probe: Inkling with OpenCode on pygfx **9/9** (milestone 3 not reached); Clover with Kilo on pygfx **0/9** (reports completion, never ran its app). One run each, different models and agents, so this is not a model ranking.
+
 Same cells, other setups (probe results): Godot — Clover 3 of 10, MoVA 3 of 10, Bonsai 3 of 10. Python controller — Clover 4 of 14, MoVA 13 of 14, Bonsai 14 of 14; app — Clover cannot start, MoVA frozen, Bonsai none.
 
 ## Our own mistakes (kept in the record)
@@ -95,3 +107,4 @@ Same cells, other setups (probe results): Godot — Clover 3 of 10, MoVA 3 of 10
 13. Our OpenCode config did not declare the model text-only, which killed the first pygfx attempt with an HTTP 400 when the agent read an image (item above). Our global OpenCode config had the same flaw.
 14. The shared `live.log` mixes attempts that use the same cell name, so a call count read from it was inflated; counts here come from each attempt's own event file.
 15. We ran the unit tests inside a live worktree a second time (during the pygfx rerun), after noting item 11; it added only bytecode caches.
+16. The controller probe ran under the system Python 3.9 and reported nothing for Clover's pygfx controller (a `match` statement); we found it by reading the probe's `import_error`, fixed it and reran.
