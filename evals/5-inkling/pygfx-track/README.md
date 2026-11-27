@@ -1,6 +1,6 @@
 # Python/pygfx track (a third engine for the rocket game)
 
-Added after every Python/Panda3D cell in evals 3-5 ended with an app that did not start, each time on a Panda3D API fact the model got wrong. Ursina (an easier layer on top of Panda3D) was tried first and ruled out on macOS (lesson 30), so the same task was set up with **pygfx 0.18.0** (a Python render engine on wgpu, Metal on a Mac) and **rendercanvas 3.0.1**, with the same assets, the same controller spec and the same milestones.
+Added after no Python/Panda3D cell in evals 3-5 produced a playable game (apps that did not start or respond correctly, or no app, most on a Panda3D API fact the model got wrong). Ursina (an easier layer on top of Panda3D) was tried first and ruled out on macOS (lesson 30), so the same task was set up with **pygfx 0.18.0** (a Python render engine on wgpu, Metal on a Mac) and **rendercanvas 3.0.1**, with the same assets, the same controller spec and the same milestones.
 
 What is here (the rocket project itself, its assets and its docs stay private; see [`../../3-rocket-game/README.md`](../../3-rocket-game/README.md)):
 

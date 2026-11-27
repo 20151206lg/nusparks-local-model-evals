@@ -2,7 +2,8 @@
 """pg_app_probe.py SNAPSHOT_DIR [SHOTS_OUTDIR] : run every app scenario in its own subprocess on a COPY of the snapshot (the pygfx project's venv python, set PYGFX_PYTHON). Prints one JSON object."""
 import sys, os, json, subprocess, shutil, tempfile
 snap = os.path.abspath(sys.argv[1]); shots = sys.argv[2] if len(sys.argv) > 2 else None
-PY = os.environ.get("PYGFX_PYTHON") or os.path.expanduser("~/local-llm/rocket/base-pygfx/.venv/bin/python"); HERE = os.path.dirname(os.path.abspath(__file__))   # PY: the pygfx project's .venv python
+PY = os.environ.get("PYGFX_PYTHON"); HERE = os.path.dirname(os.path.abspath(__file__))   # PY: the pygfx project's .venv python, required
+if not PY or not os.path.exists(PY): sys.exit("set PYGFX_PYTHON to the .venv python of the pygfx project")
 tmp = tempfile.mkdtemp(); work = os.path.join(tmp, "snap"); shutil.copytree(snap, work, ignore=shutil.ignore_patterns(".git", ".venv", "node_modules", ".godot", "__pycache__"))
 def scen(name, arg="", timeout=240):
     try:
