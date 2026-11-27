@@ -40,6 +40,20 @@ Same task, earlier solo runs (exchange correct / tests able to fail): K2-Horizon
 - Reasoning: 168,273 thinking characters, in 97 of 162 assistant turns. The session had grown to about 115K of the 131K-token window when Pi summarized it. (We saw single reasoning-heavy turns take minutes in Strata's monitor in both rocket cells, but those readings were not saved and are not reported.)
 - Not playable.
 
+## Rocket game, Python and Panda3D, second run through OpenCode (cell P-inkling-oc, medium effort)
+
+Why: we asked for a second Python run as a tie-break for the rating, with the criterion written down beforehand: it counts as a pass only if our app probe passes (the app starts and the game can be won). It did not pass.
+
+Setup: the same model, server, prompt (`prompts/P.txt` of eval 3), base project and caps (90 min wall, 400 tool calls, 1200 s idle), but the agent is **OpenCode 2.4.1 instead of Pi**, so the two Python runs differ in the agent as well as in the run. OpenCode ran with its own config folder ([`server/opencode-rocket/`](server/opencode-rocket/opencode/opencode.jsonc), loaded through `XDG_CONFIG_HOME`; medium effort set with `body.reasoning_effort`), `OPENCODE_DISABLE_PROJECT_CONFIG=1` (the base project ships its own `opencode.json` and `.opencode/tools` with custom asset-generation tools that the other cells never saw; ignoring them also cut OpenCode's baseline prompt from about 14.1K to about 12.7K tokens), and an ordered deny list like the Kilo run's. We tested the denies first (`curl` and `kill` were refused, `echo` ran). Reads outside the worktree through the shell are not blocked, as with Pi. OpenCode's baseline prompt is about 12.7K tokens (Kilo about 17K, Pi about 1K).
+
+- Ended on the **wall cap** (90 min, exit 124), 113 tool calls (110 shell, 3 file writes), no final report; the last message was "I have all the API reconnaissance I need. Now let me write the application."
+- `controller.py` (132 lines) and 13 tests of its own, written by call 12; its log gives about 6.8 minutes for that milestone. Our controller probe: **14 of 14** checks match the reference, as in the Pi run.
+- `app.py` (406 lines) was written once, at call 24, and **never run by the agent in 113 calls** (no command ran it). Our app probe: **0 of 9**: the file fails at its first import (`cannot import name 'CDFNode' from 'panda3d.core'`), so no ShowBase app can be built from it. The Pi run's app failed on a different call (`setTitle`); both ended as an app that cannot start.
+- After writing the app, about 90 calls went on reading and probing Panda3D (event and message managers, `ShowBase` internals, mouse-wheel and motion handling, camera, lights, `OnscreenText`).
+- OpenCode's automatic summary: the prompt fell from 112,175 to 28,221 tokens between calls 64 and 65 (the event stream has no summary event; we infer it from the size drop). In the 48 calls after it the agent neither ran nor rewrote the app, and its last message speaks as if the app did not exist yet. We did not establish that the summary caused this; the Pi run's session also went wrong after its summary, in a different way (it deleted and rewrote its app).
+- Reasoning: 53,304 reasoning tokens over 110 steps (OpenCode's own count; the Pi cells above count characters, so the two are not comparable). Its `experiment-log.md` says milestone 2 is "Not started".
+- Deviation: at minute 68 we ran the unit tests and `app.py --help` in the live worktree to check progress (this created bytecode caches only).
+
 Same cells, other setups (probe results): Godot — Clover 3 of 10, MoVA 3 of 10, Bonsai 3 of 10. Python controller — Clover 4 of 14, MoVA 13 of 14, Bonsai 14 of 14; app — Clover cannot start, MoVA frozen, Bonsai none.
 
 ## Our own mistakes (kept in the record)
@@ -54,4 +68,4 @@ Same cells, other setups (probe results): Godot — Clover 3 of 10, MoVA 3 of 10
 8. The first copy of this folder contained a leftover `prompts/R4.txt` written for another model's code instead of the prompt the off arm's round 4 used (the `R3.txt` text again). Removed.
 9. We first wrote that the Python run's compaction was followed by "the" app deletion. The log shows two deletions (calls 64 and 119); only the second followed the summary (call 116).
 10. We first attached a 286-second turn to the Python run; it came from the Godot cell's monitor reading, and none of those latency readings were saved, so they are not reported.
-
+11. At minute 68 of the OpenCode Python run we ran the unit tests and an import of the app inside the live worktree to check progress. It only added bytecode caches and did not change the result, but a running cell should be left alone.

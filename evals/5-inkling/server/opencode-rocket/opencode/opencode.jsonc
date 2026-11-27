@@ -1,0 +1,267 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "model": "strata/inkling-2-mini-sq-20",
+  "small_model": "strata/inkling-2-mini-sq-20",
+  "snapshots": false,
+  "providers": {
+    "strata": {
+      "name": "Inkling 2 Mini SQ-20 (local, Strata)",
+      "package": "@opencode/ai/providers/openai-compatible",
+      "settings": {
+        "baseURL": "http://127.0.0.1:8001/v1"
+      },
+      "models": {
+        "inkling-2-mini-sq-20": {
+          "name": "Inkling 2 Mini SQ-20 (local, medium effort)",
+          "capabilities": {
+            "tools": true
+          },
+          "body": {
+            "reasoning_effort": "medium"
+          },
+          "limit": {
+            "context": 131072,
+            "output": 16384
+          }
+        }
+      }
+    }
+  },
+  "permissions": [
+    {
+      "action": "*",
+      "resource": "*",
+      "effect": "allow"
+    },
+    {
+      "action": "subagent",
+      "resource": "*",
+      "effect": "deny"
+    },
+    {
+      "action": "webfetch",
+      "resource": "*",
+      "effect": "deny"
+    },
+    {
+      "action": "websearch",
+      "resource": "*",
+      "effect": "deny"
+    },
+    {
+      "action": "generate_image",
+      "resource": "*",
+      "effect": "deny"
+    },
+    {
+      "action": "generate_video",
+      "resource": "*",
+      "effect": "deny"
+    },
+    {
+      "action": "question",
+      "resource": "*",
+      "effect": "deny"
+    },
+    {
+      "action": "skill",
+      "resource": "*",
+      "effect": "deny"
+    },
+    {
+      "action": "execute",
+      "resource": "*",
+      "effect": "deny"
+    },
+    {
+      "action": "external_directory",
+      "resource": "*",
+      "effect": "deny"
+    },
+    {
+      "action": "external_directory",
+      "resource": "/tmp/*",
+      "effect": "allow"
+    },
+    {
+      "action": "external_directory",
+      "resource": "/private/tmp/*",
+      "effect": "allow"
+    },
+    {
+      "action": "external_directory",
+      "resource": "/var/folders/*",
+      "effect": "allow"
+    },
+    {
+      "action": "external_directory",
+      "resource": "/private/var/folders/*",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "sudo *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "su *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "ssh *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "scp *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "rsync *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "git push*",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "git remote*",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "git config*",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "git reset --hard*",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "git clean*",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "launchctl *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "pkill *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "kill *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "killall *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "xargs kill*",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "rm -rf /*",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "rm -rf ~*",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "rm -rf $HOME*",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "rm -rf ..*",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "rm -fr *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "chmod -R *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "chown *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "brew *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "pip *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "pip3 *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "curl *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "wget *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "uv *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "uvx *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "npm *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "npx *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "open *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "osascript *",
+      "effect": "deny"
+    }
+  ]
+}

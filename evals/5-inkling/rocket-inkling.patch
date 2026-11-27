@@ -1,5 +1,5 @@
 diff --git a/evals/3-rocket-game/bin/accept_watch.sh b/evals/3-rocket-game/bin/accept_watch.sh
-index d000c71..1695672 100755
+index d000c71..008144e 100755
 --- a/evals/3-rocket-game/bin/accept_watch.sh
 +++ b/evals/3-rocket-game/bin/accept_watch.sh
 @@ -1,7 +1,7 @@
@@ -7,7 +7,7 @@ index d000c71..1695672 100755
  # accept_watch.sh : run the no-screenshot acceptance of each cell as soon as its END line appears. Needs RUN.
  source "$(dirname "$0")/env.sh"
 -for CELL in G-clover P-clover G-mova P-mova; do
-+for CELL in ${CELLS:-G-clover P-clover G-mova P-mova}; do  # CELLS="G-inkling P-inkling" for the Inkling run
++for CELL in ${CELLS:-G-clover P-clover G-mova P-mova}; do  # CELLS="G-inkling P-inkling" (or P-inkling-oc) for the Inkling runs
    waited=0
    until grep -q "$CELL END\|$CELL ABORT" "$RUN/timeline.log"; do sleep 20; waited=$((waited+20)); [ "$waited" -ge "${MAX_WAIT_S:-14400}" ] && { tl.sh "$CELL acceptance gave up waiting (${MAX_WAIT_S:-14400}s)"; break; }; done
    grep -q "$CELL ABORT" "$RUN/timeline.log" && continue
@@ -31,21 +31,41 @@ index 4430f17..c475e3b 100755
      except Exception as e: sys.stderr.write(f"capwatch: kill failed: {e}\n")
  def watch():
      while not done:
+diff --git a/evals/3-rocket-game/bin/run_agent.sh b/evals/3-rocket-game/bin/run_agent.sh
+index 5785e69..bff54a6 100755
+--- a/evals/3-rocket-game/bin/run_agent.sh
++++ b/evals/3-rocket-game/bin/run_agent.sh
+@@ -1,8 +1,14 @@
+ #!/bin/bash
+-# run_agent.sh kilo|pi PIDFILE SECS PROMPT : cwd = work dir. exec keeps the pid so capwatch can SIGTERM `timeout`.
++# run_agent.sh kilo|pi|opencode PIDFILE SECS PROMPT : cwd = work dir. exec keeps the pid so capwatch can SIGTERM `timeout`.
+ echo $$ > "$2"; export PATH=$ROOT/shims:$PATH
+ if [ "$1" = pi ]; then
+   exec timeout "$3" pi -nc --offline --mode json --session-dir "$RUN/pi-sessions" --tools read,bash,edit,write -p "$4" </dev/null
++elif [ "$1" = opencode ]; then
++  # OpenCode 2.x: its own config dir (XDG_CONFIG_HOME, see evals/5-inkling/server/opencode-rocket/) so your global config is not loaded; the repo's own opencode.json and
++  # .opencode/tools (custom asset-generation tools) are ignored; no model-catalog fetch, no hosted free models, no Claude Code files.
++  # Needs OPENCODE_RUN_CONFIG_HOME = the folder that contains opencode/opencode.jsonc.
++  export XDG_CONFIG_HOME=${OPENCODE_RUN_CONFIG_HOME:?set OPENCODE_RUN_CONFIG_HOME} OPENCODE_DISABLE_PROJECT_CONFIG=1 OPENCODE_DISABLE_AUTOUPDATE=1 OPENCODE_DISABLE_FREE_MODELS=1 OPENCODE_DISABLE_MODELS_FETCH=1 OPENCODE_DISABLE_CLAUDE_CODE=1
++  exec timeout "$3" opencode run --standalone --auto --format json --title "rocket" -m strata/inkling-2-mini-sq-20 "$4" </dev/null
+ else
+   exec timeout "$3" kilo run --dir "$PWD" --format json --title "rocket" "$4" </dev/null
+ fi
 diff --git a/evals/3-rocket-game/bin/run_cell.sh b/evals/3-rocket-game/bin/run_cell.sh
-index 136ad91..461b54c 100755
+index 136ad91..8f873d8 100755
 --- a/evals/3-rocket-game/bin/run_cell.sh
 +++ b/evals/3-rocket-game/bin/run_cell.sh
 @@ -1,11 +1,11 @@
  #!/bin/bash
 -# run_cell.sh G|P clover|mova [wall_min] [tool_cap] : one experiment cell. Fresh clone of the base repo, preflight (untouched repo
-+# run_cell.sh G|P clover|mova|inkling [wall_min] [tool_cap] : one experiment cell. Fresh clone of the base repo, preflight (untouched repo
++# run_cell.sh G|P clover|mova|inkling|inkling-oc [wall_min] [tool_cap] : one experiment cell. Fresh clone of the base repo, preflight (untouched repo
  # passes its own checks), swap to the model's server, run the agent (Kilo for clover, Pi for mova) with a tool-call cap, an idle cap and a wall cap,
  # then reap leftovers, commit whatever is left, snapshot. Needs RUN. No retry after a cap/timeout.
  set -u; source "$(dirname "$0")/env.sh"
  check_run || { echo "RUN must be an existing directory <path under your home>/runs/<id> (run bin/init_run.sh and source runs/CURRENT.env)"; exit 1; }
  TRACK=$1; MODEL=$2; MIN=${3:-120}; CAP=${4:-400}; IDLE=1200; CELL=$TRACK-$MODEL; T0=$(date +%s)
 -case $MODEL in clover) AGENT=kilo;; mova) AGENT=pi;; *) echo bad model; exit 2;; esac
-+case $MODEL in clover) AGENT=kilo;; mova|inkling) AGENT=pi;; *) echo bad model; exit 2;; esac
++case $MODEL in clover) AGENT=kilo;; mova|inkling) AGENT=pi;; inkling-oc) AGENT=opencode;; *) echo bad model; exit 2;; esac
  case $TRACK in G) BASE=$ROCKET/base-godot;; P) BASE=$ROCKET/base-python;; *) echo bad track; exit 2;; esac
  PROMPT="$(python3 "$ROOT/bin/render_prompt.py" "${PROMPT_FILE:-$ROOT/prompts/$TRACK.txt}")" || { echo "prompt rendering failed; nothing was started"; exit 2; }
  D=$RUN/$CELL; WORK=$D/work; mkdir -p "$RUN" && mkdir "$D" 2>/dev/null || { echo "cell directory $D already exists (or RUN unusable); use a new run directory"; exit 1; }
@@ -55,7 +75,7 @@ index 136ad91..461b54c 100755
  tl.sh "$CELL preflight ok"
 -swap.sh $MODEL || { tl.sh "$CELL ABORT swap $MODEL failed"; exit 1; }
 -tl.sh "$CELL swap to $MODEL ok"
-+if [ $MODEL = inkling ]; then  # Strata is its own daemon on :8001 (not a LaunchAgent in this setup): only check that it answers and that nothing else holds :8000
++if [ $MODEL = inkling ] || [ $MODEL = inkling-oc ]; then  # Strata is its own daemon on :8001 (not a LaunchAgent in this setup): only check that it answers and that nothing else holds :8000
 +  curl -sf -m 20 http://127.0.0.1:8001/v1/models | grep -q inkling-2-mini-sq-20 && ! lsof -nP -iTCP:8000 -sTCP:LISTEN >/dev/null 2>&1 || { tl.sh "$CELL ABORT Strata not ready on :8001 or :8000 busy"; exit 1; }
 +  tl.sh "$CELL Strata ready (no swap)"
 +else
@@ -67,12 +87,23 @@ index 136ad91..461b54c 100755
  ( cd "$WORK" && run_agent.sh $AGENT "$PF" $((MIN*60)) "$PROMPT" 2>"$D/agent.err" ) \
 diff --git a/evals/3-rocket-game/bin/run_inkling.sh b/evals/3-rocket-game/bin/run_inkling.sh
 new file mode 100755
-index 0000000..548b409
+index 0000000..14b8add
 --- /dev/null
 +++ b/evals/3-rocket-game/bin/run_inkling.sh
 @@ -0,0 +1,5 @@
 +#!/bin/bash
-+# run_inkling.sh [G] [P] : the Inkling cells (Godot, then Python/Panda3D), each with a wall cap of 90 min and a 400 tool-call cap. Needs RUN. Strata must already be serving on :8001.
++# run_inkling.sh [G] [P] : the Inkling cells through Pi (Godot, then Python/Panda3D), each with a wall cap of 90 min and a 400 tool-call cap. Needs RUN. Strata must already be serving on :8001.
 +source "$(dirname "$0")/env.sh"
 +for c in ${@:-G P}; do run_cell.sh $c inkling 90 400; done
++tl.sh "ALL CELLS DONE"
+diff --git a/evals/3-rocket-game/bin/run_inkling_oc.sh b/evals/3-rocket-game/bin/run_inkling_oc.sh
+new file mode 100755
+index 0000000..b498d86
+--- /dev/null
++++ b/evals/3-rocket-game/bin/run_inkling_oc.sh
+@@ -0,0 +1,5 @@
++#!/bin/bash
++# run_inkling_oc.sh [G] [P] : the Inkling cells through OpenCode 2.x (medium effort set in its config). Needs RUN, OPENCODE_RUN_CONFIG_HOME and a Strata serving on :8001.
++source "$(dirname "$0")/env.sh"
++for c in ${@:-P}; do run_cell.sh $c inkling-oc 90 400; done
 +tl.sh "ALL CELLS DONE"
